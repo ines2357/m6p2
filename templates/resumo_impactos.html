@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resumo de Impactos</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; min-height: 100vh;}
+        table {
+            width: 80%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            padding: 5px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        .linha-fornecedor {
+            background-color: #e0f7fa;
+        }
+        .linha-transportadora {
+            background-color: #fff3e0;
+        }
+        
+        footer { 
+            padding: 10px 0; 
+            background-color: #f4f4f4; 
+            text-align: center; 
+            font-size: 14px; 
+            color: #555; 
+            border-top: 1px solid #ddd;
+            margin-top: auto;
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+    </style>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+
+</head>
+
+<body>
+    <div class="d-flex justify-content-center align-items-start" style="height: 100vh; padding-top: 50px;">
+        <div class="container">
+            <h1>Resumo de Impactos</h1>
+
+            <p>A tabela seguinte apresenta os fatores relativos à produção e transporte de produtos que apresentam efeitos nefastos para o ambiente.</p>
+            <p>Para determinar o impacto ambiental, utilizou-se uma escala de 1 a 5 para cada categoria, tendo em conta os impactos mínimos e máximos observados em cada uma delas.</p>
+            <table id="impactos-table">
+                <thead>
+                    <tr>
+                        <th rowspan="3" style="text-align: center;">Produto</th>
+                        <th rowspan="3" style="text-align: center;">Localização</th>
+                        <th colspan="6" style="text-align: center;">Fornecedor</th>
+                        <th colspan="2" style="text-align: center;">Transportadora</th>
+                    </tr>
+                    <tr>
+                        <th colspan="3" style="text-align: center;">Recursos</th>
+                        <th colspan="3" style="text-align: center;">Poluição</th>
+                        <th colspan="1" style="text-align: center;">Recursos</th>
+                        <th colspan="1" style="text-align: center;">Poluição</th>
+                    </tr>
+                    <tr>
+                        <th style="text-align: center;">Água</th>
+                        <th style="text-align: center;">Eletricidade</th>
+                        <th style="text-align: center;">Combustíveis</th>
+                        <th style="text-align: center;">Desperdício</th>
+                        <th style="text-align: center;">Contaminação</th>
+                        <th style="text-align: center;">Emissões</th>
+                        <th style="text-align: center;">Combustíveis</th>
+                        <th style="text-align: center;">Emissões</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- A tabela será preenchida dinamicamente com JavaScript -->
+                </tbody>
+            </table>
+            
+            <br>
+            
+            <p><a href="/">Voltar à página inicial</a></p>
+        </div>
+    </div>
+    <footer>
+        <p>&copy; 2025 Continente - Centro Comercial Colombo. Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        // Função para preencher a tabela com os dados da API
+        function preencherTabela(dados) {
+            const tableBody = document.querySelector("#impactos-table tbody");
+            dados.forEach(linha => {
+                const row = document.createElement("tr");
+                
+                // Criando as células da linha
+                row.innerHTML = `
+                    <td style="text-align: center;">${linha.produto}</td>
+                    <td style="text-align: center;">${linha.localizacao}</td>
+                    <td style="text-align: center;">${linha.score_agua}</td>
+                    <td style="text-align: center;">${linha.score_eletricidade}</td>
+                    <td style="text-align: center;">${linha.score_combustiveis_fornecedor}</td>
+                    <td style="text-align: center;">${linha.score_desperdicio}</td>
+                    <td style="text-align: center;">${linha.score_contaminacao}</td>
+                    <td style="text-align: center;">${linha.score_emissoes}</td>
+                    <td style="text-align: center;">${linha.score_combustiveis_transportadora}</td>
+                    <td style="text-align: center;">${linha.score_emissoes_transportadora}</td>
+                `;
+                
+                // Adiciona a linha à tabela
+                tableBody.appendChild(row);
+            });
+        }
+
+        // Função para buscar dados da API e preencher a tabela
+        async function buscarDados() {
+            try {
+                const response = await fetch('/api/resumo_impactos');
+                const dados = await response.json();
+                preencherTabela(dados);
+            } catch (error) {
+                console.error("Erro ao buscar dados:", error);
+            }
+        }
+
+        // Carregar dados ao carregar a página
+        window.onload = buscarDados;
+    </script>
+</body>
+</html>
+
+
+
+

@@ -1,0 +1,9 @@
+localizacao,produto,score_agua,score_eletricidade,score_combustiveis,score_desperdicio,score_contaminacao,score_emissoes
+Torres Vedras,Arroz,5,1,5,5,4,5
+Torres Vedras,Trigo,2,3,2,2,3,3
+Alcácer do Sal,Trigo,3,3,4,3,4,3
+Alcácer do Sal,Milho,4,2,1,1,1,1
+Alcácer do Sal,Cevada,1,3,2,2,2,1
+Campo Maior,Arroz,4,5,5,5,5,5
+Campo Maior,Milho,4,1,1,1,1,1
+Campo Maior,Cevada,2,3,2,2,3,1

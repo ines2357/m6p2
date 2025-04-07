@@ -7,12 +7,24 @@
 
 FROM ubuntu:latest
 
-RUN apt-get update && apt-get install -y python3 python3-pip
+# Instalar dependências
+RUN apt-get update && apt-get install -y python3 python3-pip python3-venv
 
-COPY ./jogo /jogo
+# Definir o diretório de trabalho
+WORKDIR /app
 
-WORKDIR /jogo
+# Copiar os arquivos do projeto para o contêiner
+COPY . .
 
-EXPOSE 8000
+# Criar o ambiente virtual
+RUN python3 -m venv .venv
 
-CMD ["python3", "app.py"]
+# Instalar dependências dentro do ambiente virtual
+RUN .venv/bin/pip install --no-cache-dir -r requirements.txt
+
+# Expor a porta que o aplicativo irá rodar
+EXPOSE 5000
+
+# Definir o comando para rodar o aplicativo usando o Python do ambiente virtual
+CMD [".venv/bin/python3", "app.py"]
+
