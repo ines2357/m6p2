@@ -3,7 +3,7 @@ import requests
 import os
 
 # Define a URL da API corretamente, priorizando a variável de ambiente
-API_URL = os.getenv("API_URL", "https://m6p1grupo2.azurewebsites.net/api/produtos")
+API_URL = os.getenv("API_URL", "http://localhost:5000/api/produtos")
 
 def obter_produtos_disponiveis():
     try:
