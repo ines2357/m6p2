@@ -6,7 +6,7 @@ import os
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app) # Permite CORS para todas as rotas, você pode ajustar se necessário
+CORS(app, resources={r"/*": {"origins": "*"}}) # Permite CORS para todas as rotas, você pode ajustar se necessário
 port = int(os.environ.get("PORT", 5000))
 
 # Rota GET para retornar a lista de produtos disponíveis
