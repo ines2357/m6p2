@@ -90,7 +90,7 @@ def api_escolher_produto():
         return jsonify(resposta)
 
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Erro ao calcular impactos ambientais."}), 500
     
 
 # Rota POST para processar o produto escolhido e renderizar a página de resultados (HTML)
