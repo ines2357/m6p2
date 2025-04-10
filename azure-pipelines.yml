@@ -10,65 +10,54 @@ trigger:
 pool:
   name: grupo2 
 
+strategy:
+  matrix:
+    Python310:
+      python.version: '3.10'
+    Python311:
+      python.version: '3.11'
+    Python312:
+      python.version: '3.12'
+
 steps:
-- script: |
-    echo "Tentando instalar e configurar o Python em diferentes versões..."
-    
-    # Lista de versões do Python para tentar
-    python_versions=("3.12" "3.11" "3.10" "3.9")
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '$(python.version)'
+    displayName: 'Use Python $(python.version)'
 
-    for version in "${python_versions[@]}"; do
-        echo "Tentando instalar Python $version..."
-        
-        # Tenta instalar a versão do Python
-        sudo apt-get update
-        sudo apt-get install -y python$version python$version-distutils python$version-venv
-        
-        if command -v python$version &>/dev/null; then
-            echo "Python $version instalado com sucesso!"
-            python=python$version  # Se o Python for instalado com sucesso, defina como o comando python
-            break  # Sai do loop se encontrar uma versão que funcione
-        else
-            echo "Falha ao instalar o Python $version."
-        fi
-    done
-    
-    # Se a variável `python` estiver definida, significa que encontramos uma versão válida
-    if [ -z "$python" ]; then
-        echo "Nenhuma versão válida do Python foi instalada. A pipeline falhou."
-        exit 1
-    fi
+  - script: |
+      python -m pip install --upgrade pip
+      apt-get update && apt-get install -y apt-utils python$version-venv
+      $python -m venv venv
+      pip install -r requirements.txt
+    displayName: 'Install dependencies'
 
-    # Cria o ambiente virtual com a versão do Python encontrada
-    $python -m venv venv
-  displayName: 'Instalar e configurar Python com várias versões'
+  - script: |
+      echo "Ativando o ambiente virtual e instalando dependências..."
+      source venv/bin/activate  # Ativa o ambiente virtual
+      pip install --upgrade pip  # Atualiza o pip
+      pip install -r requirements.txt  # Instala as dependências do arquivo requirements.txt
+    displayName: 'Instalar dependências'
 
-- script: |
-    echo "Ativando o ambiente virtual e instalando dependências..."
-    source venv/bin/activate  # Ativa o ambiente virtual
-    pip install --upgrade pip  # Atualiza o pip
-    pip install -r requirements.txt  # Instala as dependências do arquivo requirements.txt
-  displayName: 'Instalar dependências'
+  - script: |
+      echo "Rodando flake8 para verificar o código..."
+      source venv/bin/activate  # Ativa novamente o ambiente virtual
+      flake8 .  # Executa o linting em todos os arquivos Python
+      exit_code=$?  # Captura o código de saída do flake8
 
-- script: |
-    echo "Rodando flake8 para verificar o código..."
-    source venv/bin/activate  # Ativa novamente o ambiente virtual
-    flake8 .  # Executa o linting em todos os arquivos Python
-    exit_code=$?  # Captura o código de saída do flake8
+      if [ $exit_code -eq 1 ]; then
+        echo "Erro no linting (exit 1), pipeline falhou!"
+        exit 1  # Força a falha da pipeline com código de erro 1
+      elif [ $exit_code -eq 2 ]; then
+        echo "Erro de sintaxe (exit 2), pipeline falhou!"
+        exit 2  # Força a falha da pipeline com código de erro 2
+      fi
+    displayName: 'Executar Linting Python com flake8'
+    continueOnError: 'false'  # Garantir que a pipeline falhe se ocorrer erro
 
-    if [ $exit_code -eq 1 ]; then
-      echo "Erro no linting (exit 1), pipeline falhou!"
-      exit 1  # Força a falha da pipeline com código de erro 1
-    elif [ $exit_code -eq 2 ]; then
-      echo "Erro de sintaxe (exit 2), pipeline falhou!"
-      exit 2  # Força a falha da pipeline com código de erro 2
-    fi
-  displayName: 'Executar Linting Python com flake8'
-  continueOnError: 'false'  # Garantir que a pipeline falhe se ocorrer erro
-
-- script: |
-    echo "Build/Deploy ou outros passos podem ser adicionados aqui..."
-  displayName: 'Outros passos do pipeline'  # Pode adicionar build, deploy ou testes aqui
+  - script: |
+      echo "Build/Deploy ou outros passos podem ser adicionados aqui..."
+    displayName: 'Outros passos do pipeline'  # Pode adicionar build, deploy ou testes aqui
 
 
 
