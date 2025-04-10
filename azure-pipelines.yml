@@ -1,19 +1,46 @@
-# Starter pipeline
-# Start with a minimal pipeline that you can customize to build and deploy your code.
-# Add steps that build, run tests, deploy, and more:
-# https://aka.ms/yaml
+# Data: abril 2025
+# Autores:
+# - Inês Mendes
+# - Margarida Tavares
+# - Tomás Franco
 
 trigger:
-- main
+- main  # Substitui pela tua branch, se necessário
 
 pool:
-  name: grupo2 
+  name: grupo2  # Pool do agente self-hosted (ou usa o pool padrão como 'ubuntu-latest')
 
 steps:
-- script: echo Hello, world!
-  displayName: 'Run a one-line script'
+- task: UsePythonVersion@0  # Para instalar a versão Python
+  inputs:
+    versionSpec: '3.x'  # Substitui com a versão que deseja usar
+    addToPath: true
 
 - script: |
-    echo Add other tasks to build, test, and deploy your project.
-    echo See https://aka.ms/yaml
-  displayName: 'Run a multi-line script'
+    echo "Criando o ambiente virtual..."
+    python -m venv venv  # Cria o ambiente virtual
+  displayName: 'Criar ambiente virtual'
+
+- script: |
+    echo "Ativando o ambiente virtual e instalando as dependências..."
+    source venv/bin/activate  # Ativa o ambiente virtual
+    pip install --upgrade pip  # Atualiza o pip
+    pip install -r requirements.txt  # Instala as dependências do arquivo requirements.txt
+  displayName: 'Instalar dependências'
+
+- script: |
+    echo "Rodando flake8 para verificar o código..."
+    source venv/bin/activate  # Ativa novamente o ambiente virtual
+    flake8 .  # Executa o linting em todos os arquivos Python
+    exit_code=$?  # Captura o código de saída do flake8
+
+    if [ $exit_code -eq 1 ]; then
+      echo "Erro no linting (exit 1), pipeline falhou!"
+      exit 1  # Força a falha da pipeline com código de erro 1
+    elif [ $exit_code -eq 2 ]; then
+      echo "Erro de sintaxe (exit 2), pipeline falhou!"
+      exit 2  # Força a falha da pipeline com código de erro 2
+    fi
+  displayName: 'Executar Linting Python com flake8'
+  continueOnError: "false"  # Garantir que a pipeline falhe se ocorrer erro
+
