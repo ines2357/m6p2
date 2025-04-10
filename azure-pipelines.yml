@@ -5,24 +5,46 @@
 # - Tomás Franco
 
 trigger:
-- main  # Substitui pela tua branch, se necessário
+- main 
 
 pool:
-  name: grupo2  # Pool do agente self-hosted (ou usa o pool padrão como 'ubuntu-latest')
+  name: grupo2 
 
 steps:
-- task: UsePythonVersion@0  # Para instalar a versão Python
-  inputs:
-    versionSpec: '3.12.3'  # Substitui com a versão que deseja usar
-    addToPath: true
+- script: |
+    echo "Tentando instalar e configurar o Python em diferentes versões..."
+    
+    # Lista de versões do Python para tentar
+    python_versions=("3.12" "3.11" "3.10" "3.9")
+
+    for version in "${python_versions[@]}"; do
+        echo "Tentando instalar Python $version..."
+        
+        # Tenta instalar a versão do Python
+        sudo apt-get update
+        sudo apt-get install -y python$version python$version-distutils python$version-venv
+        
+        if command -v python$version &>/dev/null; then
+            echo "Python $version instalado com sucesso!"
+            python=python$version  # Se o Python for instalado com sucesso, defina como o comando python
+            break  # Sai do loop se encontrar uma versão que funcione
+        else
+            echo "Falha ao instalar o Python $version."
+        fi
+    done
+    
+    # Se a variável `python` estiver definida, significa que encontramos uma versão válida
+    if [ -z "$python" ]; then
+        echo "Nenhuma versão válida do Python foi instalada. A pipeline falhou."
+        exit 1
+    fi
+
+    # Cria o ambiente virtual com a versão do Python encontrada
+    $python -m venv venv
+  displayName: 'Instalar e configurar Python com várias versões'
 
 - script: |
-    echo "Criando o ambiente virtual..."
-    python -m venv venv  # Cria o ambiente virtual
-  displayName: 'Criar ambiente virtual'
-
-- script: |
-    echo "Ativando o ambiente virtual e instalando as dependências..."
+    echo "Ativando o ambiente virtual e instalando dependências..."
     source venv/bin/activate  # Ativa o ambiente virtual
     pip install --upgrade pip  # Atualiza o pip
     pip install -r requirements.txt  # Instala as dependências do arquivo requirements.txt
@@ -42,5 +64,11 @@ steps:
       exit 2  # Força a falha da pipeline com código de erro 2
     fi
   displayName: 'Executar Linting Python com flake8'
-  continueOnError: "false"  # Garantir que a pipeline falhe se ocorrer erro
+  continueOnError: 'false'  # Garantir que a pipeline falhe se ocorrer erro
+
+- script: |
+    echo "Build/Deploy ou outros passos podem ser adicionados aqui..."
+  displayName: 'Outros passos do pipeline'  # Pode adicionar build, deploy ou testes aqui
+
+
 
