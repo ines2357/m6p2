@@ -13,7 +13,7 @@ pool:
 steps:
 - task: UsePythonVersion@0  # Para instalar a versão Python
   inputs:
-    versionSpec: '3.x'  # Substitui com a versão que deseja usar
+    versionSpec: '3.12.3'  # Substitui com a versão que deseja usar
     addToPath: true
 
 - script: |
