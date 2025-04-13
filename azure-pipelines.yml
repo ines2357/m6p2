@@ -5,88 +5,54 @@
 # - Tomás Franco
 
 trigger:
-  - main
+  branches:
+    include:
+      - '*'
 
-pool:
-  name: grupo2
+pr:
+  branches:
+    include:
+      - main
 
-strategy:
-  matrix:
-    Python38:
-      python.version: '3.8'
-    Python39:
-      python.version: '3.9'
-    Python310:
-      python.version: '3.10'
-    Python311:
-      python.version: '3.11'
-    Python312:
-      python.version: '3.12'
+variables:
+  venvDir: '.venv'
 
-steps:
-  - script: |
-      echo "Instalando Python $(python.version)..."
-      sudo apt-get update
-      sudo apt-get install -y software-properties-common
-      sudo add-apt-repository -y ppa:deadsnakes/ppa
-      sudo apt-get update
-      sudo apt-get install -y python$(python.version) python$(python.version)-venv python$(python.version)-distutils
-    displayName: 'Instalar Python $(python.version)'
+stages:
+  - stage: CI
+    displayName: 'Integração Contínua (CI)'
+    condition: succeeded()
+    jobs:
+      - job: Lint
+        displayName: 'Lint em app.py da branch main'
+        pool:
+          name: 'grupo2'
+        steps:
+          - script: |
+              python3 -m venv $(venvDir)
+              source $(venvDir)/bin/activate
+              pip install --upgrade pip
+              pip install flake8
+              git fetch origin main
+              git checkout origin/main -- app.py
+              flake8 app.py
+            displayName: 'Executar flake8 em app.py (main)'
 
-  - script: |
-      echo "Criando ambiente virtual com Python $(python.version)..."
-      python$(python.version) -m venv .venv
-      source .venv/bin/activate
-      python -m pip install --upgrade pip
-      pip install -r requirements.txt
-    displayName: 'Criar venv e instalar dependências'
-
-  - script: |
-      source .venv/bin/activate
-      echo "Instalando autopep8 e flake8..."
-      pip install autopep8 flake8
-    displayName: 'Instalar autopep8 e flake8'
-
-  - script: |
-      source .venv/bin/activate
-      echo "Atualizando requirements.txt..."
-      pip freeze > requirements.txt
-    displayName: 'Atualizar requirements.txt'
-
-  - script: |
-      source .venv/bin/activate
-      echo "Corrigindo o código com autopep8..."
-      autopep8 --in-place --recursive .
-    displayName: 'Corrigir código com autopep8'
-
-  - script: |
-      source .venv/bin/activate
-      echo "Executando flake8..."
-      flake8 . || exit_code=$?
-
-      if [ "$exit_code" -eq 1 ]; then
-        echo "Erro de lint (exit 1)"
-        exit 1
-      elif [ "$exit_code" -eq 2 ]; then
-        echo "Erro de sintaxe (exit 2)"
-        exit 2
-      fi
-    displayName: 'Executar Linting com flake8'
-    continueOnError: "false"
-
-  - script: |
-      echo "Configurando Git..."
-      git config --global user.email "youremail@example.com"
-      git config --global user.name "Your Name"
-
-      git diff --exit-code || (
-        echo "Alterações detectadas, realizando commit..."
-        git add .
-        git commit -m "Corrigir estilo com autopep8"
-        git push origin $(Build.SourceBranchName)
-      )
-    displayName: 'Commit e Push das alterações corrigidas'
-    continueOnError: "false"
+  - stage: CD
+    displayName: 'Entrega Contínua (CD)'
+    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+    jobs:
+      - job: ValidarPR
+        displayName: 'Validação no Pull Request'
+        pool:
+          name: 'grupo2'
+        steps:
+          - script: |
+              python3 -m venv $(venvDir)
+              source $(venvDir)/bin/activate
+              pip install --upgrade pip
+              pip install -r requirements.txt
+              echo "Aqui podes rodar testes, validadores ou builds"
+            displayName: 'Preparar ambiente e validar PR'
 
 
 
