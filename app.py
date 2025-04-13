@@ -35,6 +35,7 @@ def index():
     ) = fornecedores.somar_pontuacoes_por_produto_localizacao()
     return render_template('index.html', produtos=produtos_disponiveis)
 
+
 # Rota POST para processar o produto escolhido
 # e retornar os impactos ambientais (API)
 @app.route('/api/escolher_produto', methods=['POST'])
