@@ -8,31 +8,42 @@ import os
 
 
 app = Flask(__name__)
-CORS(app, resources={r"/*": {"origins": "*"}}) # Permite CORS para todas as rotas, você pode ajustar se necessário
+# Permite CORS para todas as rotas, você pode ajustar se necessário
+CORS(app, resources={r"/*": {"origins": "*"}})
 port = int(os.environ.get("PORT", 5000))
+
 
 @app.route('/api/produtos', methods=['GET'])
 def get_produtos():
     try:
-        _, _, produtos = fornecedores.somar_pontuacoes_por_produto_localizacao()
+        (
+            _, _, produtos
+        ) = fornecedores.somar_pontuacoes_por_produto_localizacao()
+
         return jsonify(produtos)
-    except Exception as e:
+    except Exception:
         return jsonify({"error": "Erro ao obter lista de produtos."}), 500
 
 # Rota GET para a página inicial
+
+
 @app.route('/')
 def index():
     # Obtendo a lista de produtos disponíveis
-    _, _, produtos_disponiveis = fornecedores.somar_pontuacoes_por_produto_localizacao()
+    (
+        _, _, produtos_disponiveis
+    ) = fornecedores.somar_pontuacoes_por_produto_localizacao()
     return render_template('index.html', produtos=produtos_disponiveis)
 
-# Rota POST para processar o produto escolhido e retornar os impactos ambientais (API)
+# Rota POST para processar o produto escolhido
+# e retornar os impactos ambientais (API)
 @app.route('/api/escolher_produto', methods=['POST'])
 def api_escolher_produto():
     try:
         # Obtém o nome do produto enviado no corpo da requisição
         data = request.get_json()
-        produto_nome = data.get('produto_nome')  # Produto escolhido pelo usuário
+        # Produto escolhido pelo usuário
+        produto_nome = data.get('produto_nome')
 
         if not produto_nome:
             return jsonify({"error": "Nome do produto não fornecido"}), 400
@@ -41,28 +52,37 @@ def api_escolher_produto():
         produto_nome = consumidor.escolher_produto(produto_nome)
 
         if not produto_nome:  # Caso o produto não seja encontrado
-            return jsonify({"error": "Produto não encontrado."}), 404  # Retorna erro 404
+            # Retorna erro 404
+            return jsonify({"error": "Produto não encontrado."}), 404
 
         # Calcula os impactos ambientais
-        pontuacoes_por_produto_localizacao, scores_fornecedores, produtos = fornecedores.somar_pontuacoes_por_produto_localizacao()
-        pontuacoes_por_transportadora_origem, scores_transportadoras = transportadoras.somar_pontuacoes_por_transportadora_origem()
+        (
+            pontuacoes_por_produto_localizacao, scores_fornecedores, produtos
+        ) = fornecedores.somar_pontuacoes_por_produto_localizacao()
+        (
+            pontuacoes_por_transportadora_origem, scores_transportadoras
+        ) = transportadoras.somar_pontuacoes_por_transportadora_origem()
 
         # Calculando os impactos ambientais por fornecedor
         impactos_fornecedores = [
-            (localizacao, pontuacao) 
-            for (produto, localizacao), pontuacao in pontuacoes_por_produto_localizacao.items() 
+            (localizacao, pontuacao)
+            for ((produto, localizacao), pontuacao)
+            in pontuacoes_por_produto_localizacao.items()
             if produto == produto_nome
         ]
-        
+
         impactos_transportadoras = [
-            (origem_percurso, pontuacao) 
-            for (transportadora, origem_percurso), pontuacao in pontuacoes_por_transportadora_origem.items()
+            (origem_percurso, pontuacao)
+            for ((transportadora, origem_percurso), pontuacao)
+            in pontuacoes_por_transportadora_origem.items()
         ]
-        
+
         impactos_totais = []
         for (localizacao, impacto_fornecedor) in impactos_fornecedores:
             impacto_transporte = next(
-                (impacto for (origem_percurso, impacto) in impactos_transportadoras if origem_percurso == localizacao),
+                (impacto for (origem_percurso, impacto)
+                 in impactos_transportadoras
+                 if origem_percurso == localizacao),
                 0
             )
             impacto_total = impacto_fornecedor + impacto_transporte
@@ -89,36 +109,46 @@ def api_escolher_produto():
         # Retorna o resultado como resposta JSON
         return jsonify(resposta)
 
-    except Exception as e:
+    except Exception:
         return jsonify({"error": "Erro ao calcular impactos ambientais."}), 500
-    
 
-# Rota POST para processar o produto escolhido e renderizar a página de resultados (HTML)
+
+# Rota POST para processar o produto escolhido
+# e renderizar a página de resultados (HTML)
 @app.route('/escolher_produto', methods=['POST'])
 def render_escolher_produto():
-    produto_nome = request.form['produto_nome']  # Produto escolhido pelo usuário
-    produto_nome = consumidor.escolher_produto(produto_nome)  # Supondo que você tem uma função para processar a escolha
+    # Produto escolhido pelo usuário
+    produto_nome = request.form['produto_nome']
+    # Supondo que você tem uma função para processar a escolha
+    produto_nome = consumidor.escolher_produto(produto_nome)
 
     # Calcula os impactos ambientais
-    pontuacoes_por_produto_localizacao, scores_fornecedores, produtos = fornecedores.somar_pontuacoes_por_produto_localizacao()
-    pontuacoes_por_transportadora_origem, scores_transportadoras = transportadoras.somar_pontuacoes_por_transportadora_origem()
+    (
+        pontuacoes_por_produto_localizacao, scores_fornecedores, produtos
+    ) = fornecedores.somar_pontuacoes_por_produto_localizacao()
+    (
+        pontuacoes_por_transportadora_origem, scores_transportadoras
+    ) = transportadoras.somar_pontuacoes_por_transportadora_origem()
 
     # Calculando os impactos ambientais por fornecedor
     impactos_fornecedores = [
-        (localizacao, pontuacao) 
-        for (produto, localizacao), pontuacao in pontuacoes_por_produto_localizacao.items() 
+        (localizacao, pontuacao)
+        for (produto, localizacao), pontuacao
+        in pontuacoes_por_produto_localizacao.items()
         if produto == produto_nome
     ]
-    
+
     impactos_transportadoras = [
-        (origem_percurso, pontuacao) 
-        for (transportadora, origem_percurso), pontuacao in pontuacoes_por_transportadora_origem.items()
+        (origem_percurso, pontuacao)
+        for (transportadora, origem_percurso), pontuacao
+        in pontuacoes_por_transportadora_origem.items()
     ]
-    
+
     impactos_totais = []
     for (localizacao, impacto_fornecedor) in impactos_fornecedores:
         impacto_transporte = next(
-            (impacto for (origem_percurso, impacto) in impactos_transportadoras if origem_percurso == localizacao),
+            (impacto for (origem_percurso, impacto)
+             in impactos_transportadoras if origem_percurso == localizacao),
             0
         )
         impacto_total = impacto_fornecedor + impacto_transporte
@@ -129,17 +159,26 @@ def render_escolher_produto():
     localizacao_menor_impacto, impacto_total = menor_impacto
 
     # Renderizar a página de resultado com os dados
-    return render_template('resultado.html', 
-                           produto=produto_nome,
-                           impactos=impactos_totais, 
-                           menor_impacto=(localizacao_menor_impacto, impacto_total))
+    return render_template(
+        'resultado.html',
+        produto=produto_nome,
+        impactos=impactos_totais,
+        menor_impacto=(
+            localizacao_menor_impacto,
+            impacto_total
+        )
+    )
 
 
 @app.route('/api/resumo_impactos', methods=['GET'])
 def api_resumo_impactos():
     try:
-        pontuacoes_por_produto_localizacao, scores_fornecedores, produtos = fornecedores.somar_pontuacoes_por_produto_localizacao()
-        pontuacoes_por_transportadora_origem, scores_transportadoras = transportadoras.somar_pontuacoes_por_transportadora_origem()
+        (
+            pontuacoes_por_produto_localizacao, scores_fornecedores, produtos
+        ) = fornecedores.somar_pontuacoes_por_produto_localizacao()
+        (
+            pontuacoes_por_transportadora_origem, scores_transportadoras
+        ) = transportadoras.somar_pontuacoes_por_transportadora_origem()
 
         dados_resumo = []
 
@@ -153,13 +192,17 @@ def api_resumo_impactos():
             score_emissoes = pontuacao[5] if len(pontuacao) > 5 else 0
 
             transportadora_data = next(
-                (data for (transportadora, origem), data in scores_transportadoras.items() if origem == localizacao),
+                (data for (transportadora, origem),
+                 data in scores_transportadoras.items()
+                 if origem == localizacao),
                 None
             )
 
             if transportadora_data:
-                score_combustivel = transportadora_data[0] if len(transportadora_data) > 0 else 0
-                score_emissoes_transporte = transportadora_data[1] if len(transportadora_data) > 1 else 0
+                score_combustivel = transportadora_data[0] if len(
+                    transportadora_data) > 0 else 0
+                score_emissoes_transporte = transportadora_data[1] if len(
+                    transportadora_data) > 1 else 0
             else:
                 score_combustivel = 0
                 score_emissoes_transporte = 0
@@ -180,19 +223,25 @@ def api_resumo_impactos():
 
         # Retornar os dados com a ordem garantida
         return jsonify(dados_resumo)
-    except Exception as e:
-        return jsonify({"error": "Erro ao calcular resumo dos impactos ambientais."}), 500
+    except Exception:
+        return jsonify(
+            {"error": "Erro ao calcular resumo dos impactos ambientais."}
+        ), 500
 
 
 @app.route('/resumo_impactos')
 def resumo_impactos():
-    pontuacoes_por_produto_localizacao, scores_fornecedores, produtos = fornecedores.somar_pontuacoes_por_produto_localizacao()
-    pontuacoes_por_transportadora_origem, scores_transportadoras = transportadoras.somar_pontuacoes_por_transportadora_origem()
+    (
+        pontuacoes_por_produto_localizacao, scores_fornecedores, produtos
+    ) = fornecedores.somar_pontuacoes_por_produto_localizacao()
+    (
+        pontuacoes_por_transportadora_origem, scores_transportadoras
+    ) = transportadoras.somar_pontuacoes_por_transportadora_origem()
 
     dados_resumo = []
 
     for (produto, localizacao), pontuacao in scores_fornecedores.items():
-        
+
         score_agua = pontuacao[0] if len(pontuacao) > 0 else 0
         score_eletricidade = pontuacao[1] if len(pontuacao) > 1 else 0
         score_combustiveis = pontuacao[2] if len(pontuacao) > 2 else 0
@@ -201,15 +250,17 @@ def resumo_impactos():
         score_emissoes = pontuacao[5] if len(pontuacao) > 5 else 0
 
         transportadora_data = next(
-            (data for (transportadora, origem), data in scores_transportadoras.items() if origem == localizacao),
+            (data for (transportadora, origem),
+             data in scores_transportadoras.items() if origem == localizacao),
             None
         )
 
-
         if transportadora_data:
-         
-            score_combustivel = transportadora_data[0] if len(transportadora_data) > 0 else 0
-            score_emissoes_transporte = transportadora_data[1] if len(transportadora_data) > 1 else 0
+
+            score_combustivel = transportadora_data[0] if len(
+                transportadora_data) > 0 else 0
+            score_emissoes_transporte = transportadora_data[1] if len(
+                transportadora_data) > 1 else 0
         else:
             score_combustivel = 0
             score_emissoes_transporte = 0
@@ -229,6 +280,7 @@ def resumo_impactos():
 
     return render_template('resumo_impactos.html', dados_resumo=dados_resumo)
 
+
 @app.route('/api/historico', methods=['GET'])
 def api_historico():
     try:
@@ -238,25 +290,25 @@ def api_historico():
         return jsonify({'escolhas': escolhas})
     except FileNotFoundError:
         return jsonify({'escolhas': []}), 200
-    except Exception as e:
-        return jsonify({"error": "Erro ao acessar o histórico de escolhas."}), 500
+    except Exception:
+        return jsonify(
+            {"error": "Erro ao acessar o histórico de escolhas."}
+        ), 500
+
 
 @app.route('/historico')
 def historico():
 
     caminho_arquivo = './historico_de_escolhas.txt'
-    
+
     try:
         with open(caminho_arquivo, "r") as arquivo:
             escolhas = arquivo.readlines()
     except FileNotFoundError:
         escolhas = []
-    
+
     return render_template('historico.html', escolhas=escolhas)
+
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=port)
-
-
-
-
