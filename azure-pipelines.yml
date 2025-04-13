@@ -5,10 +5,10 @@
 # - Tomás Franco
 
 trigger:
-- main 
+  - main  # Ou a branch que deseja monitorar
 
 pool:
-  name: grupo2 
+  name: grupo2  # Nome do pool de agentes
 
 strategy:
   matrix:
@@ -20,44 +20,73 @@ strategy:
       python.version: '3.12'
 
 steps:
+  # 1. Selecionar a versão do Python
   - task: UsePythonVersion@0
     inputs:
       versionSpec: '$(python.version)'
-    displayName: 'Use Python $(python.version)'
+    displayName: 'Selecionar Python $(python.version)'
 
+  # 2. Criar o ambiente virtual e instalar dependências
   - script: |
+      python -m venv .venv
+      source .venv/bin/activate
       python -m pip install --upgrade pip
-      apt-get update && apt-get install -y apt-utils python$version-venv
-      $python -m venv venv
-      pip install -r requirements.txt
-    displayName: 'Install dependencies'
+      pip install -r requirements.txt  # Instalar as dependências do requirements.txt
+    displayName: 'Criar venv e instalar dependências'
 
+  # 3. Instalar autopep8 e flake8
   - script: |
-      echo "Ativando o ambiente virtual e instalando dependências..."
-      source venv/bin/activate  # Ativa o ambiente virtual
-      pip install --upgrade pip  # Atualiza o pip
-      pip install -r requirements.txt  # Instala as dependências do arquivo requirements.txt
-    displayName: 'Instalar dependências'
+      source .venv/bin/activate
+      echo "Instalando autopep8 e flake8..."
+      pip install autopep8 flake8  # Instalar autopep8 e flake8
+    displayName: 'Instalar autopep8 e flake8'
 
+  # 4. Atualizar o requirements.txt com as dependências atuais
   - script: |
-      echo "Rodando flake8 para verificar o código..."
-      source venv/bin/activate  # Ativa novamente o ambiente virtual
-      flake8 .  # Executa o linting em todos os arquivos Python
-      exit_code=$?  # Captura o código de saída do flake8
+      source .venv/bin/activate
+      echo "Atualizando requirements.txt..."
+      pip freeze > requirements.txt  # Atualiza o arquivo requirements.txt com todas as dependências
+    displayName: 'Atualizar requirements.txt'
 
-      if [ $exit_code -eq 1 ]; then
-        echo "Erro no linting (exit 1), pipeline falhou!"
-        exit 1  # Força a falha da pipeline com código de erro 1
-      elif [ $exit_code -eq 2 ]; then
-        echo "Erro de sintaxe (exit 2), pipeline falhou!"
-        exit 2  # Força a falha da pipeline com código de erro 2
+  # 5. Corrigir o código automaticamente com autopep8
+  - script: |
+      source .venv/bin/activate
+      echo "Corrigindo o código com autopep8..."
+      autopep8 --in-place --recursive .  # Corrige todos os arquivos Python
+    displayName: 'Corrigir código com autopep8'
+
+  # 6. Validar o código com flake8
+  - script: |
+      source .venv/bin/activate
+      echo "Executando flake8..."
+      flake8 . || exit_code=$?  # Roda o flake8 e captura o código de saída
+
+      # Verifica o código de erro retornado
+      if [ "$exit_code" -eq 1 ]; then
+        echo "Erro de lint (exit 1)"
+        exit 1  # Força a falha da pipeline com código 1
+      elif [ "$exit_code" -eq 2 ]; then
+        echo "Erro de sintaxe (exit 2)"
+        exit 2  # Força a falha da pipeline com código 2
       fi
-    displayName: 'Executar Linting Python com flake8'
-    continueOnError: 'false'  # Garantir que a pipeline falhe se ocorrer erro
+    displayName: 'Executar Linting com flake8'
+    continueOnError: false  # Garante que a pipeline falhe se houver erro
 
+  # 7. Commit e Push das correções feitas com autopep8
   - script: |
-      echo "Build/Deploy ou outros passos podem ser adicionados aqui..."
-    displayName: 'Outros passos do pipeline'  # Pode adicionar build, deploy ou testes aqui
+      echo "Configurando Git..."
+      git config --global user.email "youremail@example.com"
+      git config --global user.name "Your Name"
+      
+      # Verificando se há alterações
+      git diff --exit-code || (
+        echo "Alterações detectadas, realizando commit..."
+        git add .
+        git commit -m "Corrigir estilo com autopep8"
+        git push origin $(Build.SourceBranchName)  # Empurrar para a branch de origem (ex: main)
+      )
+    displayName: 'Commit e Push das alterações corrigidas'
+    continueOnError: false  # Não queremos que isso continue em caso de falha
 
 
 
