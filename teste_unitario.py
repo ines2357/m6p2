@@ -24,24 +24,25 @@ class TestSomarPontuacoes(unittest.TestCase):
         )
     )
     def test_somar_pontuacoes_por_produto_localizacao(self, mock_file):
-            (
-                pontuacoes_por_produto_localizacao,
-                scores_fornecedores, produtos
-            ) = somar_pontuacoes_por_produto_localizacao()
+        (
+            pontuacoes_por_produto_localizacao,
+            scores_fornecedores,
+            produtos
+        ) = somar_pontuacoes_por_produto_localizacao()
 
-            # Verificar se as somas das pontuações estão corretas dinamicamente
-            for chave in pontuacoes_por_produto_localizacao:
-                soma_esperada = sum(scores_fornecedores[chave])
-                self.assertEqual(
-                    pontuacoes_por_produto_localizacao[chave],
-                    soma_esperada,
-                    msg=f"Soma incorreta para {chave}"
-                )
-
-            # Verificar se o ficheiro foi aberto corretamente
-            mock_file.assert_called_once_with(
-                 'fornecedores.csv', newline='', encoding='utf-8'
+        # Verificar se as somas das pontuações estão corretas dinamicamente
+        for chave in pontuacoes_por_produto_localizacao:
+            soma_esperada = sum(scores_fornecedores[chave])
+            self.assertEqual(
+                pontuacoes_por_produto_localizacao[chave],
+                soma_esperada,
+                msg=f"Soma incorreta para {chave}"
             )
+
+        # Verificar se o ficheiro foi aberto corretamente
+        mock_file.assert_called_once_with(
+                 'fornecedores.csv', newline='', encoding='utf-8'
+        )
 
 
 class TestSomarPontuacoesTransportadoras(unittest.TestCase):
