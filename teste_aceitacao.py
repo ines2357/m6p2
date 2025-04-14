@@ -18,9 +18,10 @@ def test_get_produtos(client):
     assert isinstance(data, list) or isinstance(data, dict)
 
 
-def test_escolher_produto_sucesso(client):
+@patch("consumidor.obter_produtos_disponiveis", return_value=["Trigo"])
+def test_escolher_produto_sucesso(mock_produtos, client):
     """Deve retornar impactos ambientais para um produto válido"""
-    produto_nome = "Milho"  # <- esse precisa existir na sua base
+    produto_nome = "Trigo"
     response = client.post('/api/escolher_produto', json={
         "produto_nome": produto_nome
     })
@@ -85,15 +86,13 @@ def test_erro_500_produtos(client):
     assert data['error'] == "Erro ao obter lista de produtos."
 
 
-def test_erro_500_escolher_produto(client):
-    """Deve retornar erro 500 ao tentar calcular os impactos"""
-    """ambientais e ocorre um erro"""
-    with patch(
-        "fornecedores.somar_pontuacoes_por_produto_localizacao",
-        side_effect=Exception("Erro ao calcular impactos ambientais")
-    ):
-        response = client.post('/api/escolher_produto',
-                               json={"produto_nome": "Produto A"})
+@patch("consumidor.obter_produtos_disponiveis", return_value=["Milho"])
+@patch("fornecedores.somar_pontuacoes_por_produto_localizacao",
+       side_effect=Exception("Erro ao calcular impactos ambientais"))
+def test_erro_500_escolher_produto(mock_erro, mock_produtos, client):
+    """Deve retornar erro 500 ao tentar calcular os impactos ambientais"""
+    response = client.post('/api/escolher_produto',
+                           json={"produto_nome": "Milho"})
     assert response.status_code == 500
     data = response.get_json()
     assert 'error' in data

@@ -41,22 +41,18 @@ def index():
 @app.route('/api/escolher_produto', methods=['POST'])
 def api_escolher_produto():
     try:
-        # Obtém o nome do produto enviado no corpo da requisição
         data = request.get_json()
-        # Produto escolhido pelo usuário
         produto_nome = data.get('produto_nome')
 
         if not produto_nome:
             return jsonify({"error": "Nome do produto não fornecido"}), 400
 
-        # Processa a escolha do produto
-        produto_nome = consumidor.escolher_produto(produto_nome)
+        try:
+            produto_nome = consumidor.escolher_produto(produto_nome)
+        except ValueError as e:
+            return jsonify({"error": str(e)}), 404
 
-        if not produto_nome:  # Caso o produto não seja encontrado
-            # Retorna erro 404
-            return jsonify({"error": "Produto não encontrado."}), 404
-
-        # Calcula os impactos ambientais
+        # Continua com os cálculos como antes...
         (
             pontuacoes_por_produto_localizacao, scores_fornecedores, produtos
         ) = fornecedores.somar_pontuacoes_por_produto_localizacao()
@@ -64,7 +60,6 @@ def api_escolher_produto():
             pontuacoes_por_transportadora_origem, scores_transportadoras
         ) = transportadoras.somar_pontuacoes_por_transportadora_origem()
 
-        # Calculando os impactos ambientais por fornecedor
         impactos_fornecedores = [
             (localizacao, pontuacao)
             for ((produto, localizacao), pontuacao)
@@ -92,12 +87,10 @@ def api_escolher_produto():
                 "impacto_total": impacto_total
             })
 
-        # Encontrar o local com menor impacto
         menor_impacto = min(impactos_totais, key=lambda x: x["impacto_total"])
         localizacao_menor_impacto = menor_impacto["localizacao"]
         impacto_total = menor_impacto["impacto_total"]
 
-        # Usar OrderedDict para garantir a ordem das chaves
         resposta = OrderedDict([
             ('produto', produto_nome),
             ('impactos_totais', impactos_totais),
@@ -107,11 +100,12 @@ def api_escolher_produto():
             })
         ])
 
-        # Retorna o resultado como resposta JSON
         return jsonify(resposta)
 
-    except Exception:
+    except Exception as e:
+        print(f"[ERRO INTERNO] {e}")  # Log no terminal para facilitar debug
         return jsonify({"error": "Erro ao calcular impactos ambientais."}), 500
+
 
 
 # Rota POST para processar o produto escolhido
