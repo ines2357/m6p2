@@ -15,7 +15,7 @@ pr:
       - main
 
 variables:
-  venvDir: '.venv'
+  venvDir: '$(Build.SourcesDirectory)/.venv'
   requirementsFile: 'requirements.txt'
   buildOutputDir: '$(Build.ArtifactStagingDirectory)'
 
