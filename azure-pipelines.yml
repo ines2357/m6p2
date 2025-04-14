@@ -30,27 +30,27 @@ stages:
           name: 'grupo2'
         steps:
           - script: |
-              python$(pythonVersion) -m venv $(venvDir)
+              python3 -m venv $(venvDir)
               source $(venvDir)/bin/activate
               pip install --upgrade pip
               pip install flake8
               git fetch origin main
-              git checkout origin/main -- app.py
-              flake8 app.py
-            displayName: 'Executar flake8 em app.py (main)'
+              git checkout origin/main -- *.py
+              flake8 *.py
+            displayName: 'Executar flake8 nos ficheiros Python (main)'
 
       - job: Testes
-        displayName: 'Executar testes no Pull Request'
+        displayName: 'Executar testes de aceitação'
         pool:
           name: 'grupo2'
         steps:
           - script: |
-              python$(pythonVersion) -m venv $(venvDir)
+              python3 -m venv $(venvDir)
               source $(venvDir)/bin/activate
               pip install --upgrade pip 
               pip install -r $(requirementsFile)
               pytest teste_aceitacao.py --maxfail=1
-            displayName: 'Executar testes de integração'
+            displayName: 'Executar testes de aceitação'
 
   - stage: Build
     displayName: 'Build do Projeto'
@@ -62,7 +62,7 @@ stages:
           name: 'grupo2'
         steps:
           - script: |
-              python$(pythonVersion) -m venv $(venvDir)
+              python3 -m venv $(venvDir)
               source $(venvDir)/bin/activate
               pip install --upgrade pip
               pip install -r $(requirementsFile)
@@ -76,7 +76,7 @@ stages:
 
   - stage: CD
     displayName: 'Entrega Contínua (CD)'
-    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))  # Só executa em PRs
+    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
     jobs:
       - job: ValidarPR
         displayName: 'Validação no Pull Request'
