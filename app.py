@@ -107,7 +107,6 @@ def api_escolher_produto():
         return jsonify({"error": "Erro ao calcular impactos ambientais."}), 500
 
 
-
 # Rota POST para processar o produto escolhido
 # e renderizar a página de resultados (HTML)
 @app.route('/escolher_produto', methods=['POST'])
