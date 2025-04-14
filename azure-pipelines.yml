@@ -100,17 +100,33 @@ stages:
           name: 'grupo2'
         steps:
           - script: |
-              echo "Iniciando o deploy"
-              # Copia os arquivos para o servidor remoto via SCP
-              scp -r $(Build.ArtifactStagingDirectory) user@yourserver:/path/to/deploy
-              # Conecta ao servidor via SSH e executa o deploy (exemplo)
-              ssh user@yourserver "cd /path/to/deploy && ./start_service.sh"
-              echo "Deploy realizado com sucesso"
+              echo "A ler o IP público do container..."
+              container_ip=$(cat container_ip.txt)
+
+              # A verificar se o IP foi lido corretamente
+              if [ -z "$container_ip" ]; then
+                echo "Erro: IP não encontrado no arquivo container_ip.txt"
+                exit 1
+              fi
+
+              user="grupo2" 
+
+              # Copiar artefatos diretamente para o servidor remoto
+              echo "A copiar artefatos para o servidor remoto..."
+              scp -r $(Build.ArtifactStagingDirectory) $user@$container_ip:/home/$user
+
+              # Conectar ao servidor via SSH e executar o deploy
+              echo "A Conectar ao servidor remoto via SSH e executando o deploy..."
+              ssh $user@$container_ip "cd /home/$user && ./start_service.sh"
+
+              echo "Deploy realizado com sucesso!"
 
               # Teste de saúde para garantir que a aplicação está funcionando
-              echo "Verificando se a aplicação está funcionando"
-              curl -f http://yourserver/healthcheck || exit 1  # Retorna erro caso não esteja ok
+              echo "A verificar se a aplicação está funcionando..."
+              curl -f http://$container_ip:5000/healthcheck || exit 1  # Testa o container via IP
             displayName: 'Realizar deploy e verificar funcionamento'
+
+
 
 
 
