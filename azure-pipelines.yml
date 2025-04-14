@@ -31,7 +31,7 @@ stages:
         steps:
           - script: |
               python3 -m venv $(venvDir)
-              source $(venvDir)/bin/activate
+              . $(venvDir)/bin/activate
               pip install --upgrade pip
               pip install flake8
               git fetch origin main
@@ -46,7 +46,7 @@ stages:
         steps:
           - script: |
               python3 -m venv $(venvDir)
-              source $(venvDir)/bin/activate
+              . $(venvDir)/bin/activate
               pip install --upgrade pip 
               pip install -r $(requirementsFile)
               pytest teste_aceitacao.py --maxfail=1
@@ -63,7 +63,7 @@ stages:
         steps:
           - script: |
               python3 -m venv $(venvDir)
-              source $(venvDir)/bin/activate
+              . $(venvDir)/bin/activate
               pip install --upgrade pip
               pip install -r $(requirementsFile)
               echo "Build em andamento..."
