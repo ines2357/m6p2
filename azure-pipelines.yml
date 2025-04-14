@@ -25,7 +25,7 @@ stages:
     condition: succeeded()
     jobs:
       - job: Lint
-        displayName: 'Lint em app.py da branch main'
+        displayName: 'Lint em ficheiros python'
         pool:
           name: 'grupo2'
         steps:
@@ -35,9 +35,11 @@ stages:
               pip install --upgrade pip
               pip install flake8
               git fetch origin main
+              git fetch origin develop
               git checkout origin/main -- *.py
-              flake8 *.py
-            displayName: 'Executar flake8 nos ficheiros Python (main)'
+              git checkout origin/develop -- *.py
+              flake8 *.py 
+            displayName: 'Executar flake8 nos ficheiros Python'
       
       - job: Teste_unitario
         displayName: 'Executar testes unitários'
