@@ -22,6 +22,9 @@ az acr update -n "$acr_name" --admin-enabled true
 # Criar o container com a configuração fornecida
 echo "A criar o container na Azure..."
 
+username=$(az acr credential show --name grupo2 --query 'username' -o tsv)
+password=$(az acr credential show --name grupo2 --query 'passwords[0].value' -o tsv)
+
 az container create \
   --resource-group "$resource_group" \
   --name "$acr_name" \
@@ -30,8 +33,8 @@ az container create \
   --ip-address Public \
   --location "$location" \
   --os-type Linux \
-  --registry-username "$(az acr credential show --name "$acr_name" --query 'username' -o tsv)" \
-  --registry-password "$(az acr credential show --name "$acr_name" --query 'passwords[0].value' -o tsv)" \
+  --registry-username "$username" \
+  --registry-password "$password" \
   --cpu 1 \
   --memory 1.5 \
   --ports 5000
