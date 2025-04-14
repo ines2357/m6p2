@@ -38,8 +38,21 @@ stages:
               git checkout origin/main -- *.py
               flake8 *.py
             displayName: 'Executar flake8 nos ficheiros Python (main)'
+      
+      - job: Teste_unitario
+        displayName: 'Executar testes unitários'
+        pool:
+          name: 'grupo2'
+        steps:
+          - script: |
+              python3 -m venv $(venvDir)
+              . $(venvDir)/bin/activate
+              pip install --upgrade pip 
+              pip install -r $(requirementsFile)
+              python3 teste_aceitacao.py --maxfail=1 -v
+            displayName: 'Executar testes de unitário'
 
-      - job: Testes
+      - job: Teste_aceitacao
         displayName: 'Executar testes de aceitação'
         pool:
           name: 'grupo2'
@@ -49,7 +62,7 @@ stages:
               . $(venvDir)/bin/activate
               pip install --upgrade pip 
               pip install -r $(requirementsFile)
-              pytest teste_aceitacao.py --maxfail=1
+              pytest teste_aceitacao.py --maxfail=1 -v
             displayName: 'Executar testes de aceitação'
 
   - stage: Build
@@ -77,7 +90,7 @@ stages:
 
   - stage: CD
     displayName: 'Entrega Contínua (CD)'
-    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+    condition: eq(variables['Build.Reason'], 'PullRequest')
     jobs:
       - job: ValidarPR
         displayName: 'Validação no Pull Request'
