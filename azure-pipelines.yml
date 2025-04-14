@@ -16,6 +16,8 @@ pr:
 
 variables:
   venvDir: '.venv'
+  requirementsFile: 'requirements.txt'
+  buildOutputDir: '$(Build.ArtifactStagingDirectory)'
 
 stages:
   - stage: CI
@@ -28,7 +30,7 @@ stages:
           name: 'grupo2'
         steps:
           - script: |
-              python3 -m venv $(venvDir)
+              python$(pythonVersion) -m venv $(venvDir)
               source $(venvDir)/bin/activate
               pip install --upgrade pip
               pip install flake8
@@ -37,9 +39,44 @@ stages:
               flake8 app.py
             displayName: 'Executar flake8 em app.py (main)'
 
+      - job: Testes
+        displayName: 'Executar testes no Pull Request'
+        pool:
+          name: 'grupo2'
+        steps:
+          - script: |
+              python$(pythonVersion) -m venv $(venvDir)
+              source $(venvDir)/bin/activate
+              pip install --upgrade pip 
+              pip install -r $(requirementsFile)
+              pytest teste_aceitacao.py --maxfail=1
+            displayName: 'Executar testes de integração'
+
+  - stage: Build
+    displayName: 'Build do Projeto'
+    condition: succeeded()
+    jobs:
+      - job: BuildJob
+        displayName: 'Construção e empacotamento do código'
+        pool:
+          name: 'grupo2'
+        steps:
+          - script: |
+              python$(pythonVersion) -m venv $(venvDir)
+              source $(venvDir)/bin/activate
+              pip install --upgrade pip
+              pip install -r $(requirementsFile)
+              echo "Build em andamento..."
+              python setup.py sdist bdist_wheel
+            displayName: 'Compilar o projeto e gerar pacotes'
+
+          - publish: $(Build.ArtifactStagingDirectory)
+            artifact: drop
+            displayName: 'Publicar artefatos gerados'
+
   - stage: CD
     displayName: 'Entrega Contínua (CD)'
-    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))
+    condition: and(succeeded(), eq(variables['Build.Reason'], 'PullRequest'))  # Só executa em PRs
     jobs:
       - job: ValidarPR
         displayName: 'Validação no Pull Request'
@@ -47,12 +84,17 @@ stages:
           name: 'grupo2'
         steps:
           - script: |
-              python3 -m venv $(venvDir)
-              source $(venvDir)/bin/activate
-              pip install --upgrade pip
-              pip install -r requirements.txt
-              echo "Aqui podes rodar testes, validadores ou builds"
-            displayName: 'Preparar ambiente e validar PR'
+              echo "Iniciando o deploy"
+              # Copia os arquivos para o servidor remoto via SCP
+              scp -r $(Build.ArtifactStagingDirectory) user@yourserver:/path/to/deploy
+              # Conecta ao servidor via SSH e executa o deploy (exemplo)
+              ssh user@yourserver "cd /path/to/deploy && ./start_service.sh"
+              echo "Deploy realizado com sucesso"
+
+              # Teste de saúde para garantir que a aplicação está funcionando
+              echo "Verificando se a aplicação está funcionando"
+              curl -f http://yourserver/healthcheck || exit 1  # Retorna erro caso não esteja ok
+            displayName: 'Realizar deploy e verificar funcionamento'
 
 
 
