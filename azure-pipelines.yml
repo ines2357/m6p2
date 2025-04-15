@@ -67,6 +67,29 @@ stages:
               pytest teste_aceitacao.py --maxfail=1 -v
             displayName: 'Executar testes de aceitação'
 
+  - stage: Build
+    displayName: 'Build do Projeto'
+    condition: succeeded()
+    jobs:
+      - job: BuildJob
+        displayName: 'Construção e empacotamento do código'
+        pool:
+          name: 'grupo2'
+        steps:
+          - script: |
+              python3 -m venv $(venvDir)
+              . $(venvDir)/bin/activate
+              pip install --upgrade pip setuptools wheel
+              pip install --upgrade pip
+              pip install -r $(requirementsFile)
+              echo "Build em andamento..."
+              python setup.py sdist bdist_wheel
+            displayName: 'Compilar o projeto e gerar pacotes'
+
+          - publish: $(Build.ArtifactStagingDirectory)
+            artifact: drop
+            displayName: 'Publicar artefatos gerados'
+
   - stage: CD
     displayName: 'Entrega Contínua (CD)'
     condition: eq(variables['Build.Reason'], 'PullRequest')
@@ -102,7 +125,6 @@ stages:
                 --ports 5000 \
                 --restart-policy Always
             displayName: 'Atualizar Container Instance com nova imagem'
-
 
 
 
