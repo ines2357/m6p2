@@ -3,13 +3,11 @@
 resource_group="RG-UPSKILL-SysAdmin"
 acr_name="grupo2"
 image_name="teste"
-registry_username="grupo2"
-registry_password="fLt0izPmW7VVsx8JrLG87SWlNx3L1ZXsefKKe98JLN+ACRDAMDNS"
 location="spaincentral"
 
 # Criação da Azure Container Registry (ACR)
 echo "A criar Azure Container Registry..."
-az acr create --resource-group "$resource_group" --name "$acr_name" --sku Basic --location "$location"
+az acr create --resource-group "$resource_group" --name "$acr_name" --sku Basic
 
 # Construção da imagem Docker
 echo "A construir a imagem Docker..."
@@ -22,6 +20,9 @@ az acr update -n "$acr_name" --admin-enabled true
 # Criar o container com a configuração fornecida
 echo "A criar o container na Azure..."
 
+username=$(az acr credential show --name grupo2 --query "username" --output tsv)
+password=$(az acr credential show --name grupo2 --query "passwords[0].value" --output tsv)
+
 az container create \
   --resource-group "$resource_group" \
   --name "$acr_name" \
@@ -30,17 +31,20 @@ az container create \
   --ip-address Public \
   --location "$location" \
   --os-type Linux \
-  --registry-username "$(az acr credential show --name "$acr_name" --query 'username' -o tsv)" \
-  --registry-password "$(az acr credential show --name "$acr_name" --query 'passwords[0].value' -o tsv)" \
+  --registry-username "$username" \
+  --registry-password "$password" \
   --cpu 1 \
   --memory 1.5 \
   --ports 5000
 
-container_ip=$(az container show --resource-group RG-UPSKILL-SysAdmin --name grupo2 --query ipAddress.ip --output table)
-
-echo "$container_ip" > container_ip.txt
-
-echo "Container criado e a correr!"
+if echo "$create_output" | grep -q '"provisioningState": "Succeeded"'; then
+  container_ip=$(az container show --resource-group "$resource_group" --name "$acr_name" --query ipAddress.ip --output tsv)
+  echo "$container_ip" > container_ip.txt
+  echo "Container criado e a correr!"
+else
+  echo "Erro ao criar o container."
+  echo "$create_output"
+fi
 
 
 
