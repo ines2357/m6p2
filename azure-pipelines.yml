@@ -100,14 +100,8 @@ stages:
           name: 'grupo2'
         steps:
           - script: |
-              echo "A ler o IP público do container..."
-              container_ip=$(cat container_ip.txt)
 
-              # A verificar se o IP foi lido corretamente
-              if [ -z "$container_ip" ]; then
-                echo "Erro: IP não encontrado no arquivo container_ip.txt"
-                exit 1
-              fi
+              container_ip=68.221.184.225
 
               user="grupo2" 
 
@@ -122,7 +116,7 @@ stages:
               echo "Deploy realizado com sucesso!"
 
               # Teste de saúde para garantir que a aplicação está funcionando
-              echo "A verificar se a aplicação está funcionando..."
+              echo "A verificar se a aplicação está a funcionar..."
               curl -f http://$container_ip:5000/healthcheck || exit 1  # Testa o container via IP
             displayName: 'Realizar deploy e verificar funcionamento'
 
