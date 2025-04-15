@@ -67,58 +67,42 @@ stages:
               pytest teste_aceitacao.py --maxfail=1 -v
             displayName: 'Executar testes de aceitação'
 
-  - stage: Build
-    displayName: 'Build do Projeto'
-    condition: succeeded()
-    jobs:
-      - job: BuildJob
-        displayName: 'Construção e empacotamento do código'
-        pool:
-          name: 'grupo2'
-        steps:
-          - script: |
-              python3 -m venv $(venvDir)
-              . $(venvDir)/bin/activate
-              pip install --upgrade pip setuptools wheel
-              pip install --upgrade pip
-              pip install -r $(requirementsFile)
-              echo "Build em andamento..."
-              python setup.py sdist bdist_wheel
-            displayName: 'Compilar o projeto e gerar pacotes'
-
-          - publish: $(Build.ArtifactStagingDirectory)
-            artifact: drop
-            displayName: 'Publicar artefatos gerados'
-
   - stage: CD
     displayName: 'Entrega Contínua (CD)'
     condition: eq(variables['Build.Reason'], 'PullRequest')
     jobs:
-      - job: ValidarPR
-        displayName: 'Validação no Pull Request'
+      - job: DeployViaDocker
+        displayName: 'Buildar imagem, enviar para ACR e atualizar ACI'
         pool:
-          name: 'grupo2'
+          vmImage: 'ubuntu-latest'
         steps:
+
+          - task: Docker@2
+            displayName: 'Build e Push da imagem para o ACR'
+            inputs:
+              containerRegistry: 'grupo2'
+              repository: 'imagem_grupo2'
+              command: 'buildAndPush'
+              Dockerfile: '**/dockerfile'
+              tags: |
+                pr-$(System.PullRequest.PullRequestId)
+
           - script: |
 
-              container_ip=68.221.184.225
+              echo "Atualizando Azure Container Instance com nova imagem do PR..."
+              az container create \
+                --name grupo2 \
+                --resource-group RG-UPSKILL-SysAdmin \
+                --image grupo2.azurecr.io/imagem_grupo2:pr-$(System.PullRequest.PullRequestId) \
+                --cpu 1 \
+                --memory 1 \
+                --registry-username "grupo2" \
+                --registry-password "ec3y18r3wFifB8lYacqEDa3VM4xmJoIAwKv1JYrGcb+ACRBPjFnH" \
+                --dns-name-label grupo2-api \
+                --ports 5000 \
+                --restart-policy Always
+            displayName: 'Atualizar Container Instance com nova imagem'
 
-              user="grupo2" 
-
-              # Copiar artefatos diretamente para o servidor remoto
-              echo "A copiar artefatos para o servidor remoto..."
-              scp -r $(Build.ArtifactStagingDirectory) $user@$container_ip:/home/$user
-
-              # Conectar ao servidor via SSH e executar o deploy
-              echo "A Conectar ao servidor remoto via SSH e executando o deploy..."
-              ssh $user@$container_ip "cd /home/$user && ./start_service.sh"
-
-              echo "Deploy realizado com sucesso!"
-
-              # Teste de saúde para garantir que a aplicação está funcionando
-              echo "A verificar se a aplicação está a funcionar..."
-              curl -f http://$container_ip:5000/healthcheck || exit 1  # Testa o container via IP
-            displayName: 'Realizar deploy e verificar funcionamento'
 
 
 
