@@ -101,7 +101,7 @@ stages:
         steps:
           - script: |
 
-              container_ip=68.221.184.225
+              container_ip=68.221.184.225:5000
 
               user="grupo2" 
 
