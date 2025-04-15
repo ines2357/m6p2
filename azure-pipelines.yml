@@ -94,12 +94,11 @@ stages:
     displayName: 'Entrega Contínua (CD)'
     condition: eq(variables['Build.Reason'], 'PullRequest')
     jobs:
-      - job: DeployViaDocker
-        displayName: 'Buildar imagem, enviar para ACR e atualizar ACI'
+      - job: BuildAndPushDockerImage
+        displayName: 'Build da imagem Docker e envio para ACR'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
-
           - task: Docker@2
             displayName: 'Build e Push da imagem para o ACR'
             inputs:
@@ -110,8 +109,13 @@ stages:
               tags: |
                 pr-$(System.PullRequest.PullRequestId)
 
+      - job: UpdateContainerInstance
+        displayName: 'Atualizar ACI com a nova imagem Docker'
+        dependsOn: BuildAndPushDockerImage
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
           - script: |
-
               echo "Atualizando Azure Container Instance com nova imagem do PR..."
               az container create \
                 --name grupo2 \
@@ -125,10 +129,3 @@ stages:
                 --ports 5000 \
                 --restart-policy Always
             displayName: 'Atualizar Container Instance com nova imagem'
-
-
-
-
-
-
-
