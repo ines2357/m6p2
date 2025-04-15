@@ -4,6 +4,8 @@
 # - Margarida Tavares
 # - Tomás Franco
 
+trigger: none 
+
 pr:
   branches:
     include:
