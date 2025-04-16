@@ -28,13 +28,13 @@ stages:
               echo "Conectando à VM via SSH..."
 
               ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa grupo2@68.221.133.230 "
-                echo "Limpando app antigo..."
+                echo "Limpando pasta antiga..."
                 rm -rf /home/grupo2/m6p2
 
                 echo "Clonando repositório..."
-                git clone https://github.com/ines2357/m6p2.git ~
+                git clone https://github.com/ines2357/m6p2.git /home/grupo2/m6p2
 
-                cd m6p2
+                cd /home/grupo2/m6p2
 
                 python3 -m venv .venv
                 source .venv/bin/activate
