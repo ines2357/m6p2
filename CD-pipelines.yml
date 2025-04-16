@@ -27,7 +27,7 @@ stages:
           - script: |
               echo "Conectando à VM via SSH..."
 
-              ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@<IP_DA_VM>
+              ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@<IP_DA_VM> "
                 echo "Limpando app antigo..."
                 rm -rf ~/m6p2
 
@@ -42,5 +42,5 @@ stages:
 
                 echo "Executando app.py..."
                 python3 app.py
-
+              "
             displayName: 'Clonar código e executar app.py na VM'
