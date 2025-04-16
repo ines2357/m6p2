@@ -7,7 +7,7 @@
 trigger:
   branches:
     include:
-      - '*'
+      - 'develop'
 
 pr:
   branches:
@@ -97,7 +97,7 @@ stages:
       - job: CDJob
         displayName: 'Build e Deploy da Imagem Docker'
         pool:
-          vmImage: 'ubuntu-latest'
+          name: 'grupo2'
         steps:
           - script: |
               echo "Fazendo login no Azure Container Registry..."
