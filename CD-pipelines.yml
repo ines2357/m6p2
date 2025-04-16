@@ -28,10 +28,10 @@ stages:
               echo "Conectando à VM via SSH..."
 
               ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa grupo2@68.221.133.230 "
-                echo "Limpando pasta antiga..."
+                echo "A apagar a pasta antiga..."
                 rm -rf /home/grupo2/m6p2
 
-                echo "Clonando repositório..."
+                echo "A clonar repositório..."
                 git clone https://github.com/ines2357/m6p2.git /home/grupo2/m6p2
 
                 cd /home/grupo2/m6p2
@@ -40,7 +40,7 @@ stages:
                 source .venv/bin/activate
                 pip install -r requirements.txt
 
-                echo "Executando app.py..."
-                python3 app.py
+                echo 'A executar app.py em segundo plano...'
+                nohup python3 app.py > flask.log 2>&1 &
               "
             displayName: 'Clonar código e executar app.py na VM'
