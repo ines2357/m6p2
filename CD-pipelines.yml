@@ -27,7 +27,7 @@ stages:
           - script: |
               echo "Conectando à VM via SSH..."
 
-              ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ssh grupo2@68.221.133.230 "
+              ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa grupo2@68.221.133.230 "
                 echo "Limpando app antigo..."
                 rm -rf ~/m6p2
 
