@@ -34,7 +34,7 @@ stages:
                 echo "Clonando repositório..."
                 git clone https://github.com/ines2357/m6p2.git ~
 
-                cd ~/m6p2
+                cd m6p2
 
                 python3 -m venv .venv
                 source .venv/bin/activate
