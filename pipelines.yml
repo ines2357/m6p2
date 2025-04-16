@@ -94,22 +94,28 @@ stages:
     displayName: 'Entrega Contínua (CD)'
     condition: eq(variables['Build.Reason'], 'PullRequest')
     jobs:
-      - job: CDJob
-        displayName: 'Build e Deploy da Imagem Docker'
+      - job: DeployToVM
+        displayName: 'Deploy com Git Clone na VM'
         pool:
           name: 'grupo2'
         steps:
           - script: |
-              echo "Fazendo login no Azure Container Registry..."
-              az acr login --name grupo2
+              echo "Conectando à VM via SSH..."
 
-              echo "Construindo a imagem Docker..."
-              docker build -t grupo2.azurecr.io/imagem_grupo2:pr-$(System.PullRequest.PullRequestId) -f dockerfile .
+              ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@<IP_DA_VM> << 'EOF'
+                echo "Limpando app antigo..."
+                rm -rf ~/m6p2
 
-              echo "Enviando a imagem para o ACR..."
-              docker push grupo2.azurecr.io/imagem_grupo2:pr-$(System.PullRequest.PullRequestId)
+                echo "Clonando repositório..."
+                git clone https://github.com/ines2357/m6p2.git ~
 
-              echo "Atualizando Azure Container Instance com nova imagem..."
-              
-              az container create   --resource-group RG-UPSKILL-SysAdmin   --name grupo2   --image grupo2.azurecr.io/imagem_grupo2:pr-$(System.PullRequest.PullRequestId)   --registry-login-server grupo2.azurecr.io  --dns-name-label grupo2-api-pr$(System.PullRequest.PullRequestId) --location spaincentral   --os-type Linux   --registry-username grupo2   --registry-password "ec3y18r3wFifB8lYacqEDa3VM4xmJoIAwKv1JYrGcb+ACRBPjFnH"   --cpu 1   --memory 1.5   --ports 5000 --restart-policy Always
-            displayName: 'Build, Push e Deploy da Imagem Docker'
+                cd ~/m6p2
+
+                python3 -m venv )/.venv'
+                source .venv/bin/activate
+                pip install -r requirements.txt
+
+                echo "Executando app.py..."
+                python3 app.py
+              EOF
+            displayName: 'Clonar código e executar app.py na VM'
