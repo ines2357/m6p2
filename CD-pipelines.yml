@@ -27,7 +27,7 @@ stages:
           - script: |
               echo "Conectando à VM via SSH..."
 
-              ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@<IP_DA_VM> "
+              ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ssh grupo2@68.221.133.230 "
                 echo "Limpando app antigo..."
                 rm -rf ~/m6p2
 
@@ -36,7 +36,7 @@ stages:
 
                 cd ~/m6p2
 
-                python3 -m venv )/.venv'
+                python3 -m venv .venv
                 source .venv/bin/activate
                 pip install -r requirements.txt
 
