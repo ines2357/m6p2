@@ -9,6 +9,11 @@ trigger:
     include:
       - '*'
 
+pr:
+  branches:
+    include:
+      - main
+
 variables:
   venvDir: '$(Build.SourcesDirectory)/.venv'
   requirementsFile: 'requirements.txt'
@@ -84,3 +89,36 @@ stages:
           - publish: $(Build.ArtifactStagingDirectory)
             artifact: drop
             displayName: 'Publicar artefatos gerados'
+
+  - stage: CD
+    displayName: 'Entrega Contínua (CD)'
+    condition: eq(variables['Build.Reason'], 'PullRequest')
+    jobs:
+      - job: CDJob
+        displayName: 'Build e Deploy da Imagem Docker'
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+          - script: |
+              echo "Fazendo login no Azure Container Registry..."
+              az acr login --name grupo2
+
+              echo "Construindo a imagem Docker..."
+              docker build -t grupo2.azurecr.io/imagem_grupo2:pr-$(System.PullRequest.PullRequestId) -f **/dockerfile .
+
+              echo "Enviando a imagem para o ACR..."
+              docker push grupo2.azurecr.io/imagem_grupo2:pr-$(System.PullRequest.PullRequestId)
+
+              echo "Atualizando Azure Container Instance com nova imagem..."
+              az container create \
+                --name grupo2 \
+                --resource-group RG-UPSKILL-SysAdmin \
+                --image grupo2.azurecr.io/imagem_grupo2:pr-$(System.PullRequest.PullRequestId) \
+                --cpu 1 \
+                --memory 1 \
+                --registry-username "grupo2" \
+                --registry-password "ec3y18r3wFifB8lYacqEDa3VM4xmJoIAwKv1JYrGcb+ACRBPjFnH" \
+                --dns-name-label grupo2-api \
+                --ports 5000 \
+                --restart-policy Always
+            displayName: 'Build, Push e Deploy da Imagem Docker'
