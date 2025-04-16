@@ -111,5 +111,5 @@ stages:
 
               echo "Atualizando Azure Container Instance com nova imagem..."
               
-              az container create   --resource-group RG-UPSKILL-SysAdmin   --name grupo2   --image grupo2.azurecr.io/imagem_grupo2:pr-$(System.PullRequest.PullRequestId)   --registry-login-server grupo2.azurecr.io  --ip-address 68.221.184.56 --location spaincentral   --os-type Linux   --registry-username grupo2   --registry-password "ec3y18r3wFifB8lYacqEDa3VM4xmJoIAwKv1JYrGcb+ACRBPjFnH"   --cpu 1   --memory 1.5   --ports 5000 --restart-policy Always
+              az container create   --resource-group RG-UPSKILL-SysAdmin   --name grupo2   --image grupo2.azurecr.io/imagem_grupo2:pr-$(System.PullRequest.PullRequestId)   --registry-login-server grupo2.azurecr.io  --dns-name-label grupo2-api-pr$(System.PullRequest.PullRequestId) --location spaincentral   --os-type Linux   --registry-username grupo2   --registry-password "ec3y18r3wFifB8lYacqEDa3VM4xmJoIAwKv1JYrGcb+ACRBPjFnH"   --cpu 1   --memory 1.5   --ports 5000 --restart-policy Always
             displayName: 'Build, Push e Deploy da Imagem Docker'
