@@ -1,0 +1,46 @@
+# Data: abril 2025
+# Autores:
+# - Inês Mendes
+# - Margarida Tavares
+# - Tomás Franco
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  venvDir: '$(Build.SourcesDirectory)/.venv'
+  requirementsFile: 'requirements.txt'
+  buildOutputDir: '$(Build.ArtifactStagingDirectory)'
+
+stages:
+  - stage: CD
+    displayName: 'Entrega Contínua (CD)'
+    condition: eq(variables['Build.Reason'], 'PullRequest')
+    jobs:
+      - job: DeployToVM
+        displayName: 'Deploy com Git Clone na VM'
+        pool:
+          name: 'grupo2'
+        steps:
+          - script: |
+              echo "Conectando à VM via SSH..."
+
+              ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa azureuser@<IP_DA_VM> "
+                echo "Limpando app antigo..."
+                rm -rf ~/m6p2
+
+                echo "Clonando repositório..."
+                git clone https://github.com/ines2357/m6p2.git ~
+
+                cd ~/m6p2
+
+                python3 -m venv )/.venv'
+                source .venv/bin/activate
+                pip install -r requirements.txt
+
+                echo "Executando app.py..."
+                python3 app.py
+              "
+            displayName: 'Clonar código e executar app.py na VM'
