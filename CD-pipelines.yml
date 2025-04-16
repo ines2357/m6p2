@@ -29,7 +29,7 @@ stages:
 
               ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa grupo2@68.221.133.230 "
                 echo "Limpando app antigo..."
-                rm -rf ~/m6p2
+                rm -rf /home/grupo2/m6p2
 
                 echo "Clonando repositório..."
                 git clone https://github.com/ines2357/m6p2.git ~
